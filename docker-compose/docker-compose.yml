@@ -1,0 +1,44 @@
+
+version: '3'
+
+volumes:
+  nginx:
+
+networks:
+  private:
+
+services:
+  nginx-configurator.inetknght:
+    image: inetknght:nginx-cmd-latest
+    user: nobody
+    build:
+      context: nginx-configurator
+      args:
+        PYTHON_VERSION: "${PYTHON_VERSION}"
+        DOCKER_PYTHON_VERSION: "${DOCKER_PYTHON_VERSION}"
+    networks:
+      - private
+    environment:
+      # pick up from .env
+      HEALTHCHECK_PORT: "${HEALTHCHECK_PORT}"
+  nginx.inetknght:
+    image: inetknght:nginx-latest
+    #
+    # nginx will fork into its own nginx user because that's how the default
+    # /etc/nginx/nginx.conf file tells it to work.
+    # user: nobody
+    build:
+      context: nginx
+      args:
+        DEBIAN_PYTHON_VERSION: "${DEBIAN_PYTHON_VERSION}"
+        DOCKER_NGINX_VERSION: "${DOCKER_NGINX_VERSION}"
+    environment:
+      HEALTHCHECK_PORT: "${HEALTHCHECK_PORT}"
+    depends_on:
+      - nginx-configurator.inetknght
+    volumes:
+      - "nginx:/var/lib/inetknght/nginx"
+    networks:
+      - private
+    ports:
+      - "80:80"
